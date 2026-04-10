@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Policy {
 
     private String policyNumber;
@@ -73,6 +75,80 @@ public class Policy {
         return claimFreeClient;
     }
 
+    public double calculateFinalPremium() {
+        double premium = ADMINISTRATIVE_FEE + basePremium;
+        int surcharge = riskLevel * 120;
+
+        if (vehicleValue >= 60000) {
+            premium += 200.0;
+        }
+
+        if (hasAlarm) {
+            premium *= 0.95;
+        }
+
+        if (claimFreeClient) {
+            premium *= 0.9;
+        }
+
+        if (premium < basePremium) {
+            premium = basePremium;
+        }
+
+        return premium;
+    }
+
+    public double calculateRenewalPremium() {
+
+        double current = calculateFinalPremium();
+        double renewal = current;
+
+        if (riskLevel == 4) {
+            renewal *= 1.10;
+        } else if (riskLevel >= 5) {
+            renewal *= 1.20;
+        }
+
+        if (vehicleValue > 60000) {
+            renewal += 150;
+        }
+
+        if (claimFreeClient) {
+            renewal *= 0.9;
+        }
+
+        if (hasAlarm) {
+            renewal *= 0.95;
+        }
+
+        double minAllowed = current * 0.90;
+        if (renewal < minAllowed) {
+            renewal = minAllowed;
+        }
+
+        double maxAllowed = current * 1.25;
+        if (renewal > maxAllowed) {
+            renewal = maxAllowed;
+        }
+
+        return Math.round(renewal * 100.0) / 100.0;
+    }
+
+    public String getRiskSummary() {
+        if (riskLevel <= 2) {
+            return "Low risk client";
+        }
+        else if (riskLevel == 3) {
+            return "Medium risk client";
+        }
+        else if (riskLevel == 4) {
+            return "High risk client";
+        }
+        else {
+            return "Very high risk client";
+        }
+    }
+
     public static int getCreatedPolicyCount() {
         return createdPolicyCount;
     }
@@ -81,7 +157,26 @@ public class Policy {
         return ADMINISTRATIVE_FEE;
     }
 
-    public double calculateFinalPremium(double basePremium, double ADMINISTRATIVE_FEE, int riskLevel, double vehicleValue, boolean hasAlarm, boolean claimFreeClient) {
-        double premium = ADMINISTRATIVE_FEE + basePremium;
+    @Override
+    public String toString() {
+        return "Policy{" +
+                "number='" + policyNumber + '\'' +
+                ", client='" + clientName + '\'' +
+                ", finalPremium=" + calculateFinalPremium() +
+                '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Policy)) return false;
+        Policy policy = (Policy) o;
+        return Objects.equals(policyNumber, policy.policyNumber);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(policyNumber);
+    }
+
 }
